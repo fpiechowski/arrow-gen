@@ -31,6 +31,6 @@ develocity {
     }
 }
 
-rootProject.name = ("io.github.fpiechowski.arrowgen")
+rootProject.name = ("io.github.fpiechowski.arrowgen.plugin")
 
 include(":plugin")
