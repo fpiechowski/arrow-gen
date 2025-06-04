@@ -10,7 +10,6 @@ plugins {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
-
     implementation(libs.ksp.gradle)
 
     testImplementation(libs.junit)
