@@ -21,6 +21,9 @@ jobs:
           distribution: 'temurin'
           java-version: 11
 
+      - name: Run Gradle tasks
+        run: ./gradlew preMerge --continue
+
       - name: Import GPG key
         run: |
           echo "$GPG_PRIVATE_KEY" | base64 --decode > ~/.gradle/secring.gpg
