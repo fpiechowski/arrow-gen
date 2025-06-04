@@ -10,8 +10,16 @@ plugins {
 
 subprojects {
     apply {
-        plugin(rootProject.libs.plugins.detekt.get().pluginId)
-        plugin(rootProject.libs.plugins.ktlint.get().pluginId)
+        plugin(
+            rootProject.libs.plugins.detekt
+                .get()
+                .pluginId,
+        )
+        plugin(
+            rootProject.libs.plugins.ktlint
+                .get()
+                .pluginId,
+        )
     }
 
     ktlint {
@@ -22,8 +30,8 @@ subprojects {
         ignoreFailures.set(false)
         enableExperimentalRules.set(true)
         filter {
-            exclude("**/generated/**")
-            include("**/kotlin/**")
+            exclude { element -> element.file.path.contains("generated") }
+            include { element -> element.file.path.contains("kotlin") }
         }
     }
 

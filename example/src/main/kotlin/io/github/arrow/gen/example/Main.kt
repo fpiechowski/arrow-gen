@@ -62,7 +62,10 @@ fun main() {
 
 fun topLevelFunction(int: Int) = int
 
-fun <T1 : Any, T2 : GenericContainingClass<T1>> genericTopLevelFunction(t: T1, t2: T2): T2 = t2
+fun <T1 : Any, T2 : GenericContainingClass<T1>> genericTopLevelFunction(
+    t: T1,
+    t2: T2,
+): T2 = t2
 
 class ContainingClass {
     fun memberFunction(int: Int) = int
@@ -71,7 +74,7 @@ class ContainingClass {
 }
 
 class GenericContainingClass<T>(
-    private val t: T
+    private val t: T,
 ) {
     fun memberFunction(int: Int) = int
 
@@ -79,5 +82,8 @@ class GenericContainingClass<T>(
 
     fun <T2> genericMemberFunction(t2: T2) = t2
 
-    fun <T2> genericMemberFunctionUsingClassTypeParameter(t2: T2, t: T) = t2
+    fun <T2> genericMemberFunctionUsingClassTypeParameter(
+        t2: T2,
+        t: T,
+    ) = t2
 }

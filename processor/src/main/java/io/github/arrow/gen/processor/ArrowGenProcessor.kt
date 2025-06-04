@@ -15,9 +15,8 @@ import java.util.Locale.getDefault
 class ArrowGenProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
-    private val options: Map<String, String>
+    private val options: Map<String, String>,
 ) : SymbolProcessor {
-
     private val include = options["arrowGen.include"]?.split(",") ?: emptyList()
     private val exclude = options["arrowGen.exclude"]?.split(",") ?: emptyList()
     private val generateRaise = options["arrowGen.raise"]?.toBoolean() ?: false
@@ -28,7 +27,7 @@ class ArrowGenProcessor(
     enum class ApiKind {
         RAISE,
         EITHER,
-        EFFECT
+        EFFECT,
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -41,34 +40,41 @@ class ArrowGenProcessor(
 
         logger.info("Searching for functions $include")
 
-        val memberFunctionsExtensions = include.mapNotNull { functionQualifiedName ->
-            val split = functionQualifiedName.split(".")
-            val classDeclaration = resolver.getClassDeclarationByName(
-                split.dropLast(1).joinToString(".")
-            )
-            val function = classDeclaration
-                ?.declarations
-                ?.filterIsInstance<KSFunctionDeclaration>()
-                ?.find { it.simpleName.asString() == split.last() }
+        val memberFunctionsExtensions =
+            include
+                .mapNotNull { functionQualifiedName ->
+                    val split = functionQualifiedName.split(".")
+                    val classDeclaration =
+                        resolver.getClassDeclarationByName(
+                            split.dropLast(1).joinToString("."),
+                        )
+                    val function =
+                        classDeclaration
+                            ?.declarations
+                            ?.filterIsInstance<KSFunctionDeclaration>()
+                            ?.find { it.simpleName.asString() == split.last() }
 
-            function?.let { member ->
-                classDeclaration to member
-            }
-        }.also { logger.info("Found ${it.size} member functions to process") }
+                    function?.let { member ->
+                        classDeclaration to member
+                    }
+                }.also { logger.info("Found ${it.size} member functions to process") }
 
-        val memberFunctionsExtensionsFileSpecs = memberFunctionsExtensions
-            .map { (classDeclaration, functionDeclaration) ->
-                arrowExtensionFileSpec(classDeclaration, functionDeclaration, resolver)
-            }
+        val memberFunctionsExtensionsFileSpecs =
+            memberFunctionsExtensions
+                .map { (classDeclaration, functionDeclaration) ->
+                    arrowExtensionFileSpec(classDeclaration, functionDeclaration)
+                }
 
-        val topLevelFunctionsExtensionsFileSpecs = include.filterNot { functionQualifiedName ->
-            memberFunctionsExtensions.any { it.second.qualifiedName?.asString() == functionQualifiedName }
-        }.flatMap { functionQualifiedName ->
-            resolver.getFunctionDeclarationsByName(functionQualifiedName, true)
-        }.also { logger.info("Found ${it.size} top level functions to process") }
-            .map { functionDeclaration ->
-                arrowExtensionFileSpec(null, functionDeclaration, resolver)
-            }
+        val topLevelFunctionsExtensionsFileSpecs =
+            include
+                .filterNot { functionQualifiedName ->
+                    memberFunctionsExtensions.any { it.second.qualifiedName?.asString() == functionQualifiedName }
+                }.flatMap { functionQualifiedName ->
+                    resolver.getFunctionDeclarationsByName(functionQualifiedName, true)
+                }.also { logger.info("Found ${it.size} top level functions to process") }
+                .map { functionDeclaration ->
+                    arrowExtensionFileSpec(null, functionDeclaration)
+                }
 
         (memberFunctionsExtensionsFileSpecs + topLevelFunctionsExtensionsFileSpecs)
             .forEach {
@@ -86,90 +92,97 @@ class ArrowGenProcessor(
     private fun arrowExtensionFileSpec(
         classDeclaration: KSClassDeclaration?,
         function: KSFunctionDeclaration,
-        resolver: Resolver
     ): FileSpec {
         val className = classDeclaration?.simpleName?.asString()
         val packageName = function.packageName.asString()
         val functionName = function.simpleName.asString()
         val capitalizedFunctionName =
             functionName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
-        return FileSpec.builder(
-            packageName = "$packageName.arrow",
-            fileName = "${className ?: ""}${capitalizedFunctionName}Extensions"
-        ).apply {
-            addImport("arrow.core", "Either")
-            addImport("arrow.core", "raise.Raise")
-            addImport("arrow.core", "raise.Effect")
-            addImport("arrow.core", "raise.catch")
-            addImport("arrow.core", "raise.effect")
-            addImport("arrow.core", "raise.either")
+        return FileSpec
+            .builder(
+                packageName = "$packageName.arrow",
+                fileName = "${className ?: ""}${capitalizedFunctionName}Extensions",
+            ).apply {
+                addImport("arrow.core", "Either")
+                addImport("arrow.core", "raise.Raise")
+                addImport("arrow.core", "raise.Effect")
+                addImport("arrow.core", "raise.catch")
+                addImport("arrow.core", "raise.effect")
+                addImport("arrow.core", "raise.either")
 
-            if (classDeclaration == null) {
-                addImport(packageName, functionName)
-            } else {
-                addImport(classDeclaration.packageName.asString(), classDeclaration.simpleName.asString())
-            }
+                if (classDeclaration == null) {
+                    addImport(packageName, functionName)
+                } else {
+                    addImport(classDeclaration.packageName.asString(), classDeclaration.simpleName.asString())
+                }
 
-            if (generateRaise) {
-                addFunction(arrowExtensionFunSpec(ApiKind.RAISE, classDeclaration, function, resolver))
-            }
+                if (generateRaise) {
+                    addFunction(arrowExtensionFunSpec(ApiKind.RAISE, classDeclaration, function))
+                }
 
-            if (generateEither) {
-                addFunction(arrowExtensionFunSpec(ApiKind.EITHER, classDeclaration, function, resolver))
-            }
+                if (generateEither) {
+                    addFunction(arrowExtensionFunSpec(ApiKind.EITHER, classDeclaration, function))
+                }
 
-            if (generateEffect) {
-                addFunction(arrowExtensionFunSpec(ApiKind.EFFECT, classDeclaration, function, resolver))
-            }
-        }.build()
+                if (generateEffect) {
+                    addFunction(arrowExtensionFunSpec(ApiKind.EFFECT, classDeclaration, function))
+                }
+            }.build()
     }
 
     private fun arrowExtensionFunSpec(
         apiKind: ApiKind,
         classDeclaration: KSClassDeclaration?,
         functionDeclaration: KSFunctionDeclaration,
-        resolver: Resolver,
     ): FunSpec {
         logger.info("Generating extension function ${functionDeclaration.qualifiedName?.asString()}")
 
         val classTypeParametersResolver = classDeclaration?.typeParameters?.toTypeParameterResolver()
-        val returnType = functionDeclaration.returnType
-            ?: throw IllegalArgumentException("${functionDeclaration.qualifiedName?.asString()} does not have a return type")
+        val returnType =
+            functionDeclaration.returnType
+                ?: throw IllegalArgumentException("${functionDeclaration.qualifiedName?.asString()} does not have a return type")
         val functionName = functionDeclaration.simpleName.asString()
         val parameters = functionDeclaration.parameters
         val typeParameters = functionDeclaration.typeParameters
         val typeParameterResolver = typeParameters.toTypeParameterResolver(classTypeParametersResolver)
 
-        return FunSpec.builder(
-            when (apiKind) {
-                ApiKind.RAISE -> "${functionName}OrRaise"
-                ApiKind.EITHER -> "${functionName}Either"
-                ApiKind.EFFECT -> "${functionName}Effect"
-            }
-        )
-            .returns(
+        return FunSpec
+            .builder(
                 when (apiKind) {
-                    ApiKind.RAISE -> LambdaTypeName.get(
-                        receiver = ClassName.bestGuess("arrow.core.raise.Raise")
-                            .parameterizedBy(ClassName("kotlin", "Throwable")),
-                        returnType = returnType.toTypeName(typeParameterResolver)
-                    )
+                    ApiKind.RAISE -> "${functionName}OrRaise"
+                    ApiKind.EITHER -> "${functionName}Either"
+                    ApiKind.EFFECT -> "${functionName}Effect"
+                },
+            ).returns(
+                when (apiKind) {
+                    ApiKind.RAISE ->
+                        LambdaTypeName.get(
+                            receiver =
+                                ClassName
+                                    .bestGuess("arrow.core.raise.Raise")
+                                    .parameterizedBy(ClassName("kotlin", "Throwable")),
+                            returnType = returnType.toTypeName(typeParameterResolver),
+                        )
 
-                    ApiKind.EITHER -> ClassName.bestGuess("arrow.core.Either")
-                        .parameterizedBy(Throwable::class.asTypeName(), returnType.toTypeName(typeParameterResolver))
+                    ApiKind.EITHER ->
+                        ClassName
+                            .bestGuess("arrow.core.Either")
+                            .parameterizedBy(Throwable::class.asTypeName(), returnType.toTypeName(typeParameterResolver))
 
-                    ApiKind.EFFECT -> ClassName.bestGuess("arrow.core.raise.Effect")
-                        .parameterizedBy(Throwable::class.asTypeName(), returnType.toTypeName(typeParameterResolver))
-                }
-            )
-            .apply {
+                    ApiKind.EFFECT ->
+                        ClassName
+                            .bestGuess("arrow.core.raise.Effect")
+                            .parameterizedBy(Throwable::class.asTypeName(), returnType.toTypeName(typeParameterResolver))
+                },
+            ).apply {
                 classDeclaration?.let {
                     val classTypeParametersUsedInValueParameters =
                         classDeclaration.typeParameters.filter { typeParameter ->
                             parameters.any {
-                                it.type.toTypeName(typeParameterResolver) == typeParameter.toTypeVariableName(
-                                    typeParameterResolver
-                                )
+                                it.type.toTypeName(typeParameterResolver) ==
+                                    typeParameter.toTypeVariableName(
+                                        typeParameterResolver,
+                                    )
                             }
                         }
 
@@ -177,24 +190,28 @@ class ArrowGenProcessor(
                         addTypeVariable(
                             TypeVariableName(
                                 typeParameter.name.asString(),
-                                typeParameter.bounds.map { bound ->
-                                    bound.toTypeName(typeParameterResolver)
-                                }.toList()
-                            )
+                                typeParameter.bounds
+                                    .map { bound ->
+                                        bound.toTypeName(typeParameterResolver)
+                                    }.toList(),
+                            ),
                         )
                     }
 
-                    val typeArguments = classDeclaration.typeParameters.map {
-                        typeParameterResolver[it.name.asString()]
-                    }
-
-                    receiver(classDeclaration.let {
-                        if (classTypeParametersUsedInValueParameters.isNotEmpty()) {
-                            it.toClassName().parameterizedBy(typeArguments)
-                        } else {
-                            it.asStarProjectedType().toTypeName(typeParameterResolver)
+                    val typeArguments =
+                        classDeclaration.typeParameters.map {
+                            typeParameterResolver[it.name.asString()]
                         }
-                    })
+
+                    receiver(
+                        classDeclaration.let {
+                            if (classTypeParametersUsedInValueParameters.isNotEmpty()) {
+                                it.toClassName().parameterizedBy(typeArguments)
+                            } else {
+                                it.asStarProjectedType().toTypeName(typeParameterResolver)
+                            }
+                        },
+                    )
                 }
 
                 typeParameters.forEach { param ->
@@ -207,25 +224,27 @@ class ArrowGenProcessor(
                     addParameter(paramName, paramType)
                 }
 
-                addCode(buildCodeBlock {
-                    when (apiKind) {
-                        ApiKind.RAISE -> {
-                            add("return ")
-                            add("{\n")
+                addCode(
+                    buildCodeBlock {
+                        when (apiKind) {
+                            ApiKind.RAISE -> {
+                                add("return ")
+                                add("{\n")
+                            }
+
+                            ApiKind.EITHER -> add("return either {\n")
+                            ApiKind.EFFECT -> add("return effect {\n")
                         }
 
-                        ApiKind.EITHER -> add("return either {\n")
-                        ApiKind.EFFECT -> add("return effect {\n")
-                    }
+                        indent()
 
-                    indent()
+                        arrowCatch(functionName, parameters)
 
-                    arrowCatch(functionName, parameters)
+                        unindent()
 
-                    unindent()
-
-                    add("\n}")
-                })
+                        add("\n}")
+                    },
+                )
             }.build()
     }
 
@@ -251,13 +270,10 @@ class ArrowGenProcessor(
 }
 
 class ArrowGenProcessorProvider : SymbolProcessorProvider {
-    override fun create(
-        environment: SymbolProcessorEnvironment
-    ): SymbolProcessor {
-        return ArrowGenProcessor(
+    override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor =
+        ArrowGenProcessor(
             codeGenerator = environment.codeGenerator,
             logger = environment.logger,
-            options = environment.options
+            options = environment.options,
         )
-    }
 }

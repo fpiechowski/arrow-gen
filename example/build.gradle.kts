@@ -20,7 +20,26 @@ dependencies {
 }
 
 ksp {
-    arg("arrowGen.include", listOf(
+    arg(
+        "arrowGen.include",
+        listOf(
+            "io.github.arrow.gen.example.topLevelFunction",
+            "io.github.arrow.gen.example.genericTopLevelFunction",
+            "io.github.arrow.gen.example.ContainingClass.memberFunction",
+            "io.github.arrow.gen.example.ContainingClass.genericMemberFunction",
+            "io.github.arrow.gen.example.GenericContainingClass.memberFunction",
+            "io.github.arrow.gen.example.GenericContainingClass.memberFunctionUsingClassTypeParameter",
+            "io.github.arrow.gen.example.GenericContainingClass.genericMemberFunction",
+            "io.github.arrow.gen.example.GenericContainingClass.genericMemberFunctionUsingClassTypeParameter",
+        ).joinToString(","),
+    )
+    arg("arrowGen.raise", "true")
+    arg("arrowGen.either", "true")
+    arg("arrowGen.effect", "true")
+}
+
+arrowGen {
+    include.addAll(
         "io.github.arrow.gen.example.topLevelFunction",
         "io.github.arrow.gen.example.genericTopLevelFunction",
         "io.github.arrow.gen.example.ContainingClass.memberFunction",
@@ -29,16 +48,5 @@ ksp {
         "io.github.arrow.gen.example.GenericContainingClass.memberFunctionUsingClassTypeParameter",
         "io.github.arrow.gen.example.GenericContainingClass.genericMemberFunction",
         "io.github.arrow.gen.example.GenericContainingClass.genericMemberFunctionUsingClassTypeParameter",
-    ).joinToString(","))
-    arg("arrowGen.raise", "true")
-    arg("arrowGen.either", "true")
-    arg("arrowGen.effect", "true")
-}
-
-arrowGen {
-    include.addAll(
-        "com.fasterxml.jackson.databind.ObjectMapper.writeValueAsString",
-        "com.fasterxml.jackson.module.kotlin.jacksonObjectMapper",
-        "io.github.arrow.gen.example.genericFunction"
     )
 }

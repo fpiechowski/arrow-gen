@@ -23,25 +23,30 @@ class ArrowGenPlugin : Plugin<Project> {
 
                 val runtimeClasspath = project.configurations.getByName("runtimeClasspath")
 
-                val outputDir = project.layout.buildDirectory.dir("generated").get()
+                val outputDir =
+                    project.layout.buildDirectory
+                        .dir("generated")
+                        .get()
                 val outputFile = outputDir.file("arrowGenScan")
 
-                project.tasks.register("arrowGenScan") {
-                    it.doLast {
+                project.tasks.register("arrowGenScan") { scanTask ->
+                    scanTask.doLast {
                         outputDir.asFile.mkdirs()
 
-                        val classGraph = ClassGraph()
-                            .overrideClasspath(runtimeClasspath)
-                            .enableClassInfo()
-                            .ignoreClassVisibility()
+                        val classGraph =
+                            ClassGraph()
+                                .overrideClasspath(runtimeClasspath)
+                                .enableClassInfo()
+                                .ignoreClassVisibility()
 
                         val scanResult = classGraph.scan()
                         val allClasses = scanResult.allClasses
 
                         val matchesInclude = { name: String ->
-                            includePatterns.isEmpty() || includePatterns.any { pattern ->
-                                globMatches(name, pattern)
-                            }
+                            includePatterns.isEmpty() ||
+                                includePatterns.any { pattern ->
+                                    globMatches(name, pattern)
+                                }
                         }
 
                         val matchesExclude = { name: String ->
@@ -50,10 +55,11 @@ class ArrowGenPlugin : Plugin<Project> {
                             }
                         }
 
-                        val matchingFqns = allClasses
-                            .map { it.name }
-                            .filter { matchesInclude(it) && !matchesExclude(it) }
-                            .sorted()
+                        val matchingFqns =
+                            allClasses
+                                .map { classInfo -> classInfo.name }
+                                .filter { className -> matchesInclude(className) && !matchesExclude(className) }
+                                .sorted()
 
                         outputFile.asFile.writeText(matchingFqns.joinToString("\n"))
                         println("Scanned FQNs written to: ${outputFile.asFile.absolutePath}")
@@ -64,21 +70,28 @@ class ArrowGenPlugin : Plugin<Project> {
 
         project.plugins.withId("com.google.devtools.ksp") {
             val kspExt = project.extensions.findByName("ksp")
-            val argMethod = kspExt?.javaClass?.methods
-                ?.find { it.name == "arg" && it.parameterCount == 2 }
+            val argMethod =
+                kspExt
+                    ?.javaClass
+                    ?.methods
+                    ?.find { method -> method.name == "arg" && method.parameterCount == 2 }
 
             argMethod?.invoke(kspExt, "arrowGen.raise", extension.raise.get().toString())
             argMethod?.invoke(kspExt, "arrowGen.either", extension.either.get().toString())
         }
     }
 
-    private fun globMatches(fqn: String, pattern: String): Boolean {
+    private fun globMatches(
+        fqn: String,
+        pattern: String,
+    ): Boolean {
         // Convert pattern like "com.example.**" to regex
-        val regex = pattern
-            .replace(".", "\\.")
-            .replace("**", ".*")
-            .replace("*", "[^.]*")
-            .toRegex()
+        val regex =
+            pattern
+                .replace(".", "\\.")
+                .replace("**", ".*")
+                .replace("*", "[^.]*")
+                .toRegex()
         return regex.matches(fqn)
     }
 }
