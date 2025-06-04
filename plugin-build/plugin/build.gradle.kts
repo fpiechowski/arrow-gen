@@ -10,6 +10,15 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
 
+    implementation(libs.ksp.api)
+    implementation(libs.ksp.plugin)
+    implementation(libs.arrow.core)
+    implementation(libs.arrow.fx.coroutines)
+    implementation(libs.kotlinpoet)
+    implementation(libs.kotlinpoet.ksp)
+
+    implementation("io.github.classgraph:classgraph:4.8.179")
+
     testImplementation(libs.junit)
 }
 
@@ -52,7 +61,7 @@ tasks.named("check").configure {
     )
 }
 
-tasks.create("setupPluginUploadFromEnvironment") {
+tasks.register("setupPluginUploadFromEnvironment") {
     doLast {
         val key = System.getenv("GRADLE_PUBLISH_KEY")
         val secret = System.getenv("GRADLE_PUBLISH_SECRET")

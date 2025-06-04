@@ -1,30 +1,106 @@
-# kotlin-gradle-plugin-template 🐘
+# Arrow Extension Function Generator 🏹
 
-[![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/cortinico/kotlin-gradle-plugin-template/generate) [![Pre Merge Checks](https://github.com/cortinico/kotlin-gradle-plugin-template/workflows/Pre%20Merge%20Checks/badge.svg)](https://github.com/cortinico/kotlin-gradle-plugin-template/actions?query=workflow%3A%22Pre+Merge+Checks%22)  [![License](https://img.shields.io/github/license/cortinico/kotlin-android-template.svg)](LICENSE) ![Language](https://img.shields.io/github/languages/top/cortinico/kotlin-android-template?color=blue&logo=kotlin)
+[![License](https://img.shields.io/github/license/cortinico/kotlin-android-template.svg)](LICENSE) ![Language](https://img.shields.io/github/languages/top/cortinico/kotlin-android-template?color=blue&logo=kotlin)
 
-A simple Github template that lets you create a **Gradle Plugin** 🐘 project using **100% Kotlin** and be up and running in a **few seconds**.
+A Gradle plugin that generates Arrow extension functions for specified APIs. The plugin uses KSP (Kotlin Symbol Processing) to generate extension functions that wrap regular functions with Arrow's error handling capabilities.
 
-This template is focused on delivering a project with **static analysis** and **continuous integration** already in place.
+This plugin allows you to configure what kind of Arrow API to generate:
+- `raise` flag enables generation of `Raise<T: Throwable>.(...) -> T` extension functions
+- `either` flag enables generation of functions returning `Either<E, T>`
+
+Generated functions call source functions wrapped in Arrow's `recover` block and map exceptions to the appropriate error type.
 
 ## How to use 👣
 
-Just click on [![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/cortinico/kotlin-gradle-plugin-template/generate) button to create a new repo starting from this template.
+### Setup
 
-Once created don't forget to update the:
-- [gradle.properties](plugin-build/gradle.properties)
-- Plugin Usages (search for [com.ncorti.kotlin.gradle.template](https://github.com/cortinico/kotlin-gradle-plugin-template/search?q=com.ncorti.kotlin.gradle.template&unscoped_q=com.ncorti.kotlin.gradle.template) in the repo and replace it with your ID).
+Add the plugin to your project's build.gradle.kts file:
+
+```kotlin
+plugins {
+    id("io.github.arrow.gen.plugin") version "1.0.0"
+}
+```
+
+### Configuration
+
+Configure the plugin in your build.gradle.kts file:
+
+```kotlin
+arrowGen {
+    // Include packages to process (supports wildcards)
+    includePackages.set(listOf(
+        "com.example.api.*",      // Single-level wildcard
+        "org.sample.service.**"   // Multi-level wildcard
+    ))
+
+    // Exclude packages from processing (supports wildcards)
+    excludePackages.set(listOf(
+        "com.example.api.internal.*"
+    ))
+
+    // Enable generation of Raise<T: Throwable>.(...) -> T extension functions
+    raise.set(true)
+
+    // Enable generation of functions returning Either<E, T>
+    either.set(true)
+}
+```
+
+### Generated Code
+
+For each function that matches your package filters, the plugin will generate extension functions in a new package with the `.arrow` suffix.
+
+For example, if you have a function:
+
+```kotlin
+package com.example.api
+
+fun fetchData(id: String): Data {
+    // Implementation that might throw exceptions
+}
+```
+
+With both `raise` and `either` enabled, the plugin will generate:
+
+```kotlin
+package com.example.api.arrow
+
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import arrow.core.raise.Raise
+import arrow.core.raise.catch
+import com.example.api.fetchData
+
+// Generated when raise=true
+suspend fun <E> Raise<E>.fetchData(id: String): Data {
+    return catch(
+        block = { fetchData(id) },
+        raise = { e: Throwable -> raise(e as E) }
+    )
+}
+
+// Generated when either=true
+suspend fun <E : Throwable> fetchDataEither(id: String): Either<E, Data> {
+    return try {
+        fetchData(id).right()
+    } catch (e: Throwable) {
+        (e as E).left()
+    }
+}
+```
 
 ## Features 🎨
 
-- **100% Kotlin-only template**.
-- Plugin build setup with **composite build**.
-- 100% Gradle Kotlin DSL setup.
-- Dependency versions managed via Gradle Versions Catalog (`libs.versions.toml`).
-- CI Setup with GitHub Actions.
-- Kotlin Static Analysis via `ktlint` and `detekt`.
-- Publishing-ready to Gradle Portal.
-- Issues Template (bug report + feature request)
-- Pull Request Template.
+- **100% Kotlin implementation** using KSP (Kotlin Symbol Processing).
+- **Flexible package filtering** with wildcard support for inclusion and exclusion.
+- **Arrow integration** for functional error handling:
+  - `Raise<E>` extension functions for Railway-oriented programming.
+  - `Either<E, T>` return types for explicit error handling.
+- **Automatic code generation** that wraps existing APIs without modifying source code.
+- **Type-safe configuration** via Gradle extension.
+- **Minimal runtime dependencies** - only requires Arrow Core.
 
 ## Composite Build 📦
 
