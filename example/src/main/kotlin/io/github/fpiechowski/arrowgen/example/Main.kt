@@ -1,24 +1,24 @@
-﻿package io.github.arrow.gen.example
+﻿package io.github.fpiechowski.arrowgen.example
 
 import arrow.core.raise.effect
-import io.github.arrow.gen.example.arrow.genericMemberFunctionEffect
-import io.github.arrow.gen.example.arrow.genericMemberFunctionEither
-import io.github.arrow.gen.example.arrow.genericMemberFunctionOrRaise
-import io.github.arrow.gen.example.arrow.genericMemberFunctionUsingClassTypeParameterEffect
-import io.github.arrow.gen.example.arrow.genericMemberFunctionUsingClassTypeParameterEither
-import io.github.arrow.gen.example.arrow.genericMemberFunctionUsingClassTypeParameterOrRaise
-import io.github.arrow.gen.example.arrow.genericTopLevelFunctionEffect
-import io.github.arrow.gen.example.arrow.genericTopLevelFunctionEither
-import io.github.arrow.gen.example.arrow.genericTopLevelFunctionOrRaise
-import io.github.arrow.gen.example.arrow.memberFunctionEffect
-import io.github.arrow.gen.example.arrow.memberFunctionEither
-import io.github.arrow.gen.example.arrow.memberFunctionOrRaise
-import io.github.arrow.gen.example.arrow.memberFunctionUsingClassTypeParameterEffect
-import io.github.arrow.gen.example.arrow.memberFunctionUsingClassTypeParameterEither
-import io.github.arrow.gen.example.arrow.memberFunctionUsingClassTypeParameterOrRaise
-import io.github.arrow.gen.example.arrow.topLevelFunctionEffect
-import io.github.arrow.gen.example.arrow.topLevelFunctionEither
-import io.github.arrow.gen.example.arrow.topLevelFunctionOrRaise
+import io.github.fpiechowski.arrowgen.example.arrow.genericMemberFunctionEffect
+import io.github.fpiechowski.arrowgen.example.arrow.genericMemberFunctionEither
+import io.github.fpiechowski.arrowgen.example.arrow.genericMemberFunctionOrRaise
+import io.github.fpiechowski.arrowgen.example.arrow.genericMemberFunctionUsingClassTypeParameterEffect
+import io.github.fpiechowski.arrowgen.example.arrow.genericMemberFunctionUsingClassTypeParameterEither
+import io.github.fpiechowski.arrowgen.example.arrow.genericMemberFunctionUsingClassTypeParameterOrRaise
+import io.github.fpiechowski.arrowgen.example.arrow.genericTopLevelFunctionEffect
+import io.github.fpiechowski.arrowgen.example.arrow.genericTopLevelFunctionEither
+import io.github.fpiechowski.arrowgen.example.arrow.genericTopLevelFunctionOrRaise
+import io.github.fpiechowski.arrowgen.example.arrow.memberFunctionEffect
+import io.github.fpiechowski.arrowgen.example.arrow.memberFunctionEither
+import io.github.fpiechowski.arrowgen.example.arrow.memberFunctionOrRaise
+import io.github.fpiechowski.arrowgen.example.arrow.memberFunctionUsingClassTypeParameterEffect
+import io.github.fpiechowski.arrowgen.example.arrow.memberFunctionUsingClassTypeParameterEither
+import io.github.fpiechowski.arrowgen.example.arrow.memberFunctionUsingClassTypeParameterOrRaise
+import io.github.fpiechowski.arrowgen.example.arrow.topLevelFunctionEffect
+import io.github.fpiechowski.arrowgen.example.arrow.topLevelFunctionEither
+import io.github.fpiechowski.arrowgen.example.arrow.topLevelFunctionOrRaise
 
 fun main() {
     effect {
@@ -87,3 +87,5 @@ class GenericContainingClass<T>(
         t: T,
     ) = t2
 }
+
+fun excludedTopLevelFunction(int: Int) = int

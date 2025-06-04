@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.versionCheck)
+    alias(libs.plugins.nexusPublish)
 }
 
 subprojects {
@@ -76,4 +77,14 @@ tasks.register("preMerge") {
 
 tasks.wrapper {
     distributionType = Wrapper.DistributionType.ALL
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://central.sonatype.com/publish/"))
+            username.set(System.getenv("CENTRAL_PORTAL_USERNAME"))
+            password.set(System.getenv("CENTRAL_PORTAL_PASSWORD"))
+        }
+    }
 }

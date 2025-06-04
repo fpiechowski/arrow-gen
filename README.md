@@ -1,4 +1,4 @@
-# Arrow Extension Function Generator 🏹
+# Arrow Extension Function Generator
 
 [![License](https://img.shields.io/github/license/cortinico/kotlin-android-template.svg)](LICENSE) ![Language](https://img.shields.io/github/languages/top/cortinico/kotlin-android-template?color=blue&logo=kotlin)
 
@@ -7,8 +7,9 @@ A Gradle plugin that generates Arrow extension functions for specified APIs. The
 This plugin allows you to configure what kind of Arrow API to generate:
 - `raise` flag enables generation of `Raise<T: Throwable>.(...) -> T` extension functions
 - `either` flag enables generation of functions returning `Either<E, T>`
+- `effect` flag enables generation of functions returning `Effect<E, T>`
 
-Generated functions call source functions wrapped in Arrow's `recover` block and map exceptions to the appropriate error type.
+Generated functions call source functions wrapped in Arrow's `catch` block.
 
 ## How to use 👣
 
@@ -18,7 +19,7 @@ Add the plugin to your project's build.gradle.kts file:
 
 ```kotlin
 plugins {
-    id("io.github.arrow.gen.plugin") version "1.0.0"
+    id("io.github.fpiechowski.arrowgen.plugin") version "1.0.0"
 }
 ```
 
@@ -29,7 +30,7 @@ Configure the plugin in your build.gradle.kts file:
 ```kotlin
 arrowGen {
     // Include packages to process (supports wildcards)
-    includePackages.set(listOf(
+    include.set(listOf(
         "com.example.api.*",      // Single-level wildcard
         "org.sample.service.**"   // Multi-level wildcard
     ))

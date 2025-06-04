@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -10,14 +11,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
 
-    implementation(libs.ksp.api)
-    implementation(libs.ksp.plugin)
-    implementation(libs.arrow.core)
-    implementation(libs.arrow.fx.coroutines)
-    implementation(libs.kotlinpoet)
-    implementation(libs.kotlinpoet.ksp)
-
-    implementation("io.github.classgraph:classgraph:4.8.179")
+    implementation(libs.ksp.gradle)
 
     testImplementation(libs.junit)
 }
@@ -28,8 +22,8 @@ java {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 
@@ -41,8 +35,7 @@ gradlePlugin {
             version = property("VERSION").toString()
             description = property("DESCRIPTION").toString()
             displayName = property("DISPLAY_NAME").toString()
-            // Note: tags cannot include "plugin" or "gradle" when publishing
-            tags.set(listOf("sample", "template"))
+            tags.set(listOf("arrow", "kotlin", "code generation"))
         }
     }
 }
@@ -52,7 +45,6 @@ gradlePlugin {
     vcsUrl.set(property("VCS_URL").toString())
 }
 
-// Use Detekt with type resolution for check
 tasks.named("check").configure {
     this.setDependsOn(
         this.dependsOn.filterNot {

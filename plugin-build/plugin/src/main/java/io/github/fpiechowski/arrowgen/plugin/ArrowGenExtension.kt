@@ -1,4 +1,4 @@
-﻿package io.github.arrow.gen.plugin
+﻿package io.github.fpiechowski.arrowgen.plugin
 
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -29,6 +29,11 @@ abstract class ArrowGenExtension
                 .convention(false)
 
         val either: Property<Boolean> =
+            objects
+                .property(Boolean::class.java)
+                .convention(false)
+
+        val effect: Property<Boolean> =
             objects
                 .property(Boolean::class.java)
                 .convention(false)
