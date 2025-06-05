@@ -19,7 +19,7 @@ Add the plugin to your project's build.gradle.kts file:
 
 ```kotlin
 plugins {
-    id("io.github.fpiechowski.arrowgen.plugin") version "1.0.0"
+    id("io.github.fpiechowski.arrowgen") version "0.0.1"
 }
 ```
 
