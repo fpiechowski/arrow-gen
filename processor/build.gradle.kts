@@ -1,9 +1,11 @@
-﻿import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+﻿import com.vanniktech.maven.publish.SonatypeHost
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
     alias(libs.plugins.pluginPublish)
+    id("com.vanniktech.maven.publish") version "0.32.0"
     signing
 }
 
@@ -33,49 +35,37 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("kspProcessor") {
-            from(components["java"])
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-            groupId = "io.github.fpiechowski.arrowgen"
-            artifactId = "arrow-gen-processor"
-            version = "0.0.1"
+    signAllPublications()
 
-            pom {
-                name.set("ArrowGen Processor")
-                description.set("KSP processor to generate Raise, Either, Effect wrappers.")
-                url.set("https://github.com/fpiechowski/arrow-gen")
+    coordinates("io.github.fpiechowski.arrowgen", "arrowgen-processor", "0.0.1")
 
-                licenses {
-                    license {
-                        name.set("Apache-2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
-                    }
-                }
+    pom {
+        name.set("ArrowGen Processor")
+        description.set("KSP processor to generate Raise, Either, Effect wrappers.")
+        url.set("https://github.com/fpiechowski/arrow-gen")
 
-                developers {
-                    developer {
-                        id.set("fpiechowski")
-                        name.set("Filip Piechowski")
-                        email.set("f.piechowski@gmail.com")
-                    }
-                }
-
-                scm {
-                    connection.set("scm:git:git://github.com/fpiechowski/arrow-gen.git")
-                    developerConnection.set("scm:git:ssh://github.com:fpiechowski/arrow-gen.git")
-                    url.set("https://github.com/fpiechowski/arrow-gen")
-                }
+        licenses {
+            license {
+                name.set("Apache-2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
             }
         }
-    }
-}
 
-signing {
-    useInMemoryPgpKeys(
-        findProperty("signing.keyId") as String?,
-        findProperty("signing.password") as String?,
-    )
-    sign(publishing.publications)
+        developers {
+            developer {
+                id.set("fpiechowski")
+                name.set("Filip Piechowski")
+                email.set("f.piechowski@gmail.com")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:git://github.com/fpiechowski/arrow-gen.git")
+            developerConnection.set("scm:git:ssh://github.com:fpiechowski/arrow-gen.git")
+            url.set("https://github.com/fpiechowski/arrow-gen")
+        }
+    }
 }
