@@ -24,17 +24,10 @@ jobs:
       - name: Run Gradle tasks
         run: ./gradlew preMerge --continue
 
-      - name: Import GPG key
-        run: |
-          echo "$GPG_PRIVATE_KEY" | base64 --decode > ~/.gradle/secring.gpg
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-
       - name: Publish to Central
         run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon --stacktrace
         env:
           ORG_GRADLE_PROJECT_signing.keyId: "96827B5D7EE17040"
           ORG_GRADLE_PROJECT_signing.password: ${{ secrets.GPG_PASSPHRASE }}
-          ORG_GRADLE_PROJECT_signing.secretKeyRingFile: ~/.gradle/secring.gpg
           CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}

@@ -75,7 +75,6 @@ publishing {
 signing {
     useInMemoryPgpKeys(
         findProperty("signing.keyId") as String?,
-        findProperty("signing.secretKeyRingFile")?.let { File(it.toString()).readText() },
         findProperty("signing.password") as String?,
     )
     sign(publishing.publications)
