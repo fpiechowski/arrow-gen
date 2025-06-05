@@ -67,6 +67,8 @@ fun <T1 : Any, T2 : GenericContainingClass<T1>> genericTopLevelFunction(
     t2: T2,
 ): T2 = t2
 
+fun <T2> genericTopLevelFunctionWithInnerTypeParameter(t2: GenericContainingClass<T2>): T2 = t2.t
+
 class ContainingClass {
     fun memberFunction(int: Int) = int
 
@@ -74,7 +76,7 @@ class ContainingClass {
 }
 
 class GenericContainingClass<T>(
-    private val t: T,
+    val t: T,
 ) {
     fun memberFunction(int: Int) = int
 
@@ -86,6 +88,8 @@ class GenericContainingClass<T>(
         t2: T2,
         t: T,
     ) = t2
+
+    fun memberFunctionWithInnerTypeParameter(t2: GenericContainingClass<T>): T = t2.t
 }
 
 fun excludedTopLevelFunction(int: Int) = int

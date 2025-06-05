@@ -8,13 +8,13 @@ class ArrowGenPluginTest {
     @Test
     fun `plugin is applied correctly to the project`() {
         val project = ProjectBuilder.builder().build()
-        project.pluginManager.apply("io.github.fpiechowski.arrowgen.plugin")
+        project.pluginManager.apply("io.github.fpiechowski.arrowgen")
     }
 
     @Test
     fun `extension arrowGen is created correctly`() {
         val project = ProjectBuilder.builder().build()
-        project.pluginManager.apply("io.github.fpiechowski.arrowgen.plugin")
+        project.pluginManager.apply("io.github.fpiechowski.arrowgen")
 
         assertNotNull(project.extensions.getByName("arrowGen"))
     }
@@ -22,7 +22,7 @@ class ArrowGenPluginTest {
     @Test
     fun `extension properties have correct default values`() {
         val project = ProjectBuilder.builder().build()
-        project.pluginManager.apply("io.github.fpiechowski.arrowgen.plugin")
+        project.pluginManager.apply("io.github.fpiechowski.arrowgen")
 
         val extension = project.extensions.getByName("arrowGen") as ArrowGenExtension
 

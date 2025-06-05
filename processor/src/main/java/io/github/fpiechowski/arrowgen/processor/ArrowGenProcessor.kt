@@ -2,31 +2,12 @@
 
 import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.getFunctionDeclarationsByName
-import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.processing.Resolver
-import com.google.devtools.ksp.processing.SymbolProcessor
-import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.processing.SymbolProcessorProvider
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.KSValueParameter
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.LambdaTypeName
+import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.symbol.*
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.buildCodeBlock
-import com.squareup.kotlinpoet.ksp.toClassName
-import com.squareup.kotlinpoet.ksp.toTypeName
-import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
-import com.squareup.kotlinpoet.ksp.toTypeVariableName
-import com.squareup.kotlinpoet.ksp.writeTo
-import java.util.Locale
+import com.squareup.kotlinpoet.ksp.*
+import java.util.*
 
 class ArrowGenProcessor(
     private val codeGenerator: CodeGenerator,
@@ -177,51 +158,22 @@ class ArrowGenProcessor(
                     ApiKind.EITHER ->
                         ClassName.Companion
                             .bestGuess("arrow.core.Either")
-                            .parameterizedBy(Throwable::class.asTypeName(), returnType.toTypeName(typeParameterResolver))
+                            .parameterizedBy(
+                                Throwable::class.asTypeName(),
+                                returnType.toTypeName(typeParameterResolver),
+                            )
 
                     ApiKind.EFFECT ->
                         ClassName.Companion
                             .bestGuess("arrow.core.raise.Effect")
-                            .parameterizedBy(Throwable::class.asTypeName(), returnType.toTypeName(typeParameterResolver))
+                            .parameterizedBy(
+                                Throwable::class.asTypeName(),
+                                returnType.toTypeName(typeParameterResolver),
+                            )
                 },
             ).apply {
                 classDeclaration?.let {
-                    val classTypeParametersUsedInValueParameters =
-                        classDeclaration.typeParameters.filter { typeParameter ->
-                            parameters.any {
-                                it.type.toTypeName(typeParameterResolver) ==
-                                    typeParameter.toTypeVariableName(
-                                        typeParameterResolver,
-                                    )
-                            }
-                        }
-
-                    classTypeParametersUsedInValueParameters.forEach { typeParameter ->
-                        addTypeVariable(
-                            TypeVariableName.Companion(
-                                typeParameter.name.asString(),
-                                typeParameter.bounds
-                                    .map { bound ->
-                                        bound.toTypeName(typeParameterResolver)
-                                    }.toList(),
-                            ),
-                        )
-                    }
-
-                    val typeArguments =
-                        classDeclaration.typeParameters.map {
-                            typeParameterResolver[it.name.asString()]
-                        }
-
-                    receiver(
-                        classDeclaration.let {
-                            if (classTypeParametersUsedInValueParameters.isNotEmpty()) {
-                                it.toClassName().parameterizedBy(typeArguments)
-                            } else {
-                                it.asStarProjectedType().toTypeName(typeParameterResolver)
-                            }
-                        },
-                    )
+                    addReceiver(classDeclaration, parameters, typeParameterResolver)
                 }
 
                 typeParameters.forEach { param ->
@@ -256,6 +208,69 @@ class ArrowGenProcessor(
                     },
                 )
             }.build()
+    }
+
+    private fun FunSpec.Builder.addReceiver(
+        classDeclaration: KSClassDeclaration,
+        parameters: List<KSValueParameter>,
+        typeParameterResolver: TypeParameterResolver,
+    ): FunSpec.Builder {
+        fun typeArgumentsRec(typeRef: KSType): List<KSTypeArgument> {
+            if (typeRef.arguments.isEmpty()) {
+                return emptyList()
+            }
+
+            return typeRef.arguments +
+                typeRef.arguments.flatMap { typeArg ->
+                    typeArg.type?.resolve()?.let { typeArgumentsRec(it) } ?: emptyList()
+                }
+        }
+
+        val classTypeParametersUsedInValueParametersTypes =
+            classDeclaration.typeParameters.filter { typeParameter ->
+                parameters.any { parameter ->
+                    val parameterTypeArguments = typeArgumentsRec(parameter.type.resolve())
+
+                    (
+                        parameterTypeArguments.map { it.toTypeName(typeParameterResolver) } +
+                            parameter.type.toTypeName(
+                                typeParameterResolver,
+                            )
+                    ).any { type ->
+                        type ==
+                            typeParameter.toTypeVariableName(
+                                typeParameterResolver,
+                            )
+                    }
+                }
+            }
+
+        classTypeParametersUsedInValueParametersTypes.forEach { typeParameter ->
+            addTypeVariable(
+                TypeVariableName.Companion(
+                    typeParameter.name.asString(),
+                    typeParameter.bounds
+                        .map { bound ->
+                            bound.toTypeName(typeParameterResolver)
+                        }.toList(),
+                ),
+            )
+        }
+
+        val typeArguments =
+            classDeclaration.typeParameters.map {
+                typeParameterResolver[it.name.asString()]
+            }
+
+        return receiver(
+            classDeclaration.let {
+                if (classTypeParametersUsedInValueParametersTypes.isNotEmpty()) {
+                    it.toClassName().parameterizedBy(typeArguments)
+                } else {
+                    it.asStarProjectedType().toTypeName(typeParameterResolver)
+                }
+            },
+        )
     }
 
     private fun CodeBlock.Builder.arrowCatch(
