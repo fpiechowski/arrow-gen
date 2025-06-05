@@ -6,7 +6,6 @@ plugins {
     kotlin("jvm")
     alias(libs.plugins.pluginPublish)
     id("com.vanniktech.maven.publish") version "0.32.0"
-    signing
 }
 
 repositories {
