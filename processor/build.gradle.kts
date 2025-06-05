@@ -39,7 +39,7 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates("io.github.fpiechowski.arrowgen", "arrowgen-processor", "0.0.1")
+    coordinates("io.github.fpiechowski.arrowgen", "arrowgen-processor", "0.0.2")
 
     pom {
         name.set("ArrowGen Processor")
